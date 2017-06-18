@@ -6,6 +6,8 @@
 
 package name.blackcap.jacarsdec;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Date;
 import java.util.List;
 
@@ -55,6 +57,7 @@ public class ReaderThread extends Thread {
 		int frameSize = format.getFrameSize();
 		int sampleSize = format.getSampleSizeInBits() / 8;
 		byte[] buf = new byte[frameSize * SAMPLES];
+		ByteBuffer bbuf = ByteBuffer.wrap(buf).order(ByteOrder.nativeOrder());
 		
 		line.start();
 		while (true) {
@@ -66,10 +69,11 @@ public class ReaderThread extends Thread {
 			Date timeRead = new Date();
 			
 			// extract channels of interest
+			bbuf.rewind();
 			float[][] bufs = new float[select.length][SAMPLES];
 			for (int fr=0; fr<SAMPLES; fr++) {
 				for(int ch=0; ch<select.length; ch++) {
-					bufs[ch][fr] = bytesToFloat(buf, fr*frameSize + sampleSize*select[ch]);
+					bufs[ch][fr] = (float) bbuf.getShort(fr*frameSize + sampleSize*select[ch]) / 32768.0f;
 				}
 			}
 			
@@ -81,10 +85,5 @@ public class ReaderThread extends Thread {
 				i++;
 			}
 		}
-	}
-	
-	/* this assumes 16-bit signed little-endian ints */
-	private float bytesToFloat(byte[] buf, int offset) {
-		return (float) ((buf[offset+1]<<8) | (buf[offset]&0xff)) / 32768.0F;
 	}
 }

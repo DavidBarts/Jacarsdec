@@ -352,6 +352,8 @@ public class DemodMessage {
 				source = null;
 			else
 				source = message.substring(mesh+1, 2);
+		} else {
+			source = null;
 		}
 	}
 }

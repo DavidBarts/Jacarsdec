@@ -6,6 +6,7 @@
 
 package name.blackcap.jacarsdec;
 
+import java.nio.ByteOrder;
 import java.text.ParseException;
 import java.util.ArrayList;
 
@@ -40,7 +41,6 @@ public class Main {
 		options.addOption(new Option("c", "channels", true, "Number input channels to open (typ. 1 or 2)."));
 		options.addOption(new Option("s", "select", true, "Channels to select (comma-separated list, 0-based)."));
 		options.addOption(new Option("i", "input-size", true, "Input buffer size."));
-		options.addOption(new Option("d", "demods", true, "Number of demodulators per selected channel."));
 		options.addOption(new Option("o", "output-size", true, "Output buffer size."));
 		options.addOption(new Option("h", "help", false, "Print this help message."));
 		options.addOption(new Option("l", "list", false, "List available audio devices and exit."));
@@ -141,6 +141,7 @@ public class Main {
 		// that encodings other than PCM_SIGNED tend in my experience to
 		// fail, sometimes exposing apparent bugs in the Java runtime (e.g.
 		// reads block forever).
+		boolean bigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
 		int channels = toInt("channels", -1);
 		if (channels == -1) {
 			AudioFormat[] formats = {
@@ -151,7 +152,7 @@ public class Main {
 					2, // channels
 					2 * SSIZE / 8, // frame size (bytes)
 					(float) RATE, // frame rate
-					false // big endian?
+					bigEndian // big endian?
 				),
 			    new AudioFormat(
 					AudioFormat.Encoding.PCM_SIGNED, // encoding
@@ -160,7 +161,7 @@ public class Main {
 					1, // channels
 					SSIZE / 8, // frame size (bytes)
 					(float) RATE, // frame rate
-					false // big endian?
+					bigEndian // big endian?
 					) };
 			Exception badOpen = null;
 			for (AudioFormat format : formats) {
@@ -185,7 +186,7 @@ public class Main {
 					channels, // channels
 					channels * SSIZE / 8, // frame size (bytes)
 					(float) RATE, // frame rate
-					false // big endian?
+					bigEndian // big endian?
 					);
 			try {
 				line.open(format);
@@ -226,7 +227,6 @@ public class Main {
 		}
 		
 		// Get other parameters needed to wire things up.
-		int demodCount = toInt("demods", 2);
 		int inputSize = toInt("input-size", 50);
 		int outputSize = toInt("output-size", inputSize * select.length);
 		
@@ -239,11 +239,9 @@ public class Main {
 		
 		// Wire things up
 		ReaderThread reader = new ReaderThread(line, channels, select, inChans);
-		DemodThread[] demods = new DemodThread[demodCount * select.length];
-		for (int i=0, k=0; i<select.length; i++) {
-			for (int j=0; j<demodCount; j++) {
-				demods[k++] = new DemodThread(inChans.get(i), outChan);
-			}
+		DemodThread[] demods = new DemodThread[select.length];
+		for (int i=0; i<demods.length; i++) {
+			demods[i++] = new DemodThread(inChans.get(i), outChan, (float) RATE);
 		}
 		OutputThread writer = new OutputThread(outChan);
 		
@@ -254,8 +252,6 @@ public class Main {
 					channels, lineId, mixerId, mi.getName());
 			System.out.format("Input buffer size %d, output buffer size %d.%n",
 					inputSize, outputSize);
-			System.out.format("%d demod thread%s per selected channel (%d total).%n",
-					demodCount, demodCount == 1 ? "" : "s", demods.length);
 			System.out.format("%d threads total.%n%n", Thread.activeCount() + demods.length + 2);
 		}
 		

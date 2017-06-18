@@ -8,7 +8,6 @@ public class OutputThread extends Thread {
 	}
 
 	public void run() {
-		System.out.println("Output " + Thread.currentThread().getId() + " started."); // debug
 		/* not finished, so currently a no-op */
 		while (true)
 			try {
