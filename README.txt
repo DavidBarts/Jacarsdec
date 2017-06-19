@@ -85,7 +85,10 @@ This assumes your receiver or scanner has a line-level audio output
 (often called a "tape" port). If it doesn't, you'll have to add one. How
 to do so is beyond the scope of this document. I've had good luck with
 using series resistors and blocking capacitors to make such things (it
-takes some experimenting to find the proper values).
+takes some experimenting to find the proper values). You can also try
+acoustically coupling the audio by placing your computer's microphone
+near your receiver's speaker (this is less desirable than a direct
+electrical connection, of course).
 
 If you see messages like:
 Jacarsdec: raw data lost on channel 0
