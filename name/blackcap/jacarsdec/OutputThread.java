@@ -1,3 +1,9 @@
+/*
+ * This software is distributed under the Creative Commons Attribution 4.0
+ * International license. See LICENSE.TXT in the main directory of this
+ * repository for more information.
+ */
+
 package name.blackcap.jacarsdec;
 
 import java.text.SimpleDateFormat;
