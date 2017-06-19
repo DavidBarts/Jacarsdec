@@ -55,18 +55,17 @@ public class DemodThread extends Thread {
 	private static final byte ETX = (byte) 0x83;
 	private static final byte ETB = (byte) 0x97;
 	private static final byte DLE = 0x7f;
-	
-	private static final byte[] numbits = {
+		
+	private static final byte[] NUMBITS = {
 			0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,
 			1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
-			1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
-			2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
-			1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
-			2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
-			2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
-			3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,4,5,5,6,5,6,6,7,5,6,6,7,6,7,7,8 };
-	
-	
+	        1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+	        2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+	        1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+	        2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+	        2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+	        3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,4,5,5,6,5,6,6,7,5,6,6,7,6,7,7,8 };
+
 	public void run() {
 		initMsk();
 		initAcars();
@@ -232,7 +231,7 @@ public class DemodThread extends Thread {
 			
 		case TXT:
 			demodBuf.put(outbits);
-			if ((numbits[outbits&0xff] & 1) == 0) {
+			if ((NUMBITS[outbits&0xff] & 1) == 0) {
 				blkErr++;
 				if (blkErr > MAXPERR + 1) {
 					state = AcarsState.WSYN;
@@ -296,7 +295,7 @@ public class DemodThread extends Thread {
 		int pn = 0;
 		int[] pr = new int[MAXPERR];
 		for (int i=0; i<buf.length; i++) {
-			if ((numbits[buf[i]] & 1) == 0) {
+			if ((NUMBITS[buf[i]] & 1) == 0) {
 				if (pn < MAXPERR)
 					pr[pn] = i;
 				pn++;
@@ -319,7 +318,7 @@ public class DemodThread extends Thread {
 		
 		/* redo parity checking and remove parity bits */
 		for (int i=0; i<buf.length; i++) {
-			if ((numbits[buf[i]] & 1) == 0) {
+			if ((NUMBITS[buf[i]] & 1) == 0) {
 				System.err.format("%s: parity check failure on channel %d%n",
 						Main.MYNAME, rawMessage.getChannel());
 				return;
@@ -333,6 +332,8 @@ public class DemodThread extends Thread {
 				rawMessage.getTime(),
 				rawMessage.getChannel(),
 				blkLvl, blkErr, buf);
-		out.write(demodMessage);
+		if (out.write(demodMessage))
+			System.err.format("%s: demod data lost on channel %d%n",
+					Main.MYNAME, rawMessage.getChannel());
 	}
 }

@@ -241,7 +241,7 @@ public class Main {
 		ReaderThread reader = new ReaderThread(line, channels, select, inChans);
 		DemodThread[] demods = new DemodThread[select.length];
 		for (int i=0; i<demods.length; i++) {
-			demods[i++] = new DemodThread(inChans.get(i), outChan, (float) RATE);
+			demods[i] = new DemodThread(inChans.get(i), outChan, (float) RATE);
 		}
 		OutputThread writer = new OutputThread(outChan);
 		

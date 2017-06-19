@@ -225,24 +225,31 @@ public class DemodMessage {
 			}});
 	
 	/* Character set the messages use. */
-	private static final Charset CHARSET = Charset.forName("ISO-8859-1");
+	private static final Charset CHARSET = Charset.forName("US-ASCII");
 	
 	/* For returning explanations of unknown things */
 	private static final String UNKNOWN = "Unknown";
 	
-	/* ACARS message fields */
+	/* For keeping track of whether this message has been parsed. */
+	private enum MessageState { UNPARSED, BAD, GOOD };
+	private MessageState state;
+	
+	/* ACARS message fields, can only be retrieved after a successful parse */
 	private String registration;
 	public String getRegistration() {
+		verifyState();
 		return registration;
 	}
 	
 	private String flightId;
 	public String getFlightId() {
+		verifyState();
 		return flightId;
 	}
 	
 	private String label;
 	public String getLabel() {
+		verifyState();
 		return label;
 	}
 	public String getLabelExplanation() {
@@ -251,36 +258,58 @@ public class DemodMessage {
 	
 	private char mode;
 	public char getMode() {
+		verifyState();
 		return mode;
 	}
 	
 	private char blockId;
 	public char getBlockId() {
+		verifyState();
 		return blockId;
 	}
 	
 	private char acknowledge;
 	public char getAcknowledge() {
+		verifyState();
 		return acknowledge;
 	}
 	
 	private String messageId;
 	public String getMessageId() {
+		verifyState();
 		return messageId;
 	}
 	
 	private String source;
 	public String getSource() {
-		if (source == null)
-			throw new IllegalStateException("illegal label for source: " + getLabel());
+		verifyState();
 		return source;
 	}
 	public String getSourceExplanation() {
+		if (source == null)
+			throw new IllegalStateException("No message source!");
 		char ch1 = getSource().charAt(0);
 		if (ch1 >= '0' && ch1 <= '9')
 			return AIRLINE_H1;
 		else
 			return H1_EXPLANATIONS.getOrDefault(getSource(), UNKNOWN);
+	}
+	
+	private String message;
+	public String getMessage() {
+		verifyState();
+		return message;
+	}
+	
+	/* parameters passed on from RawMessage, can always be retrieved */
+	private Date time;
+	public Date getTime() {
+		return time;
+	}
+	
+	private int channel;
+	public int getChannel() {
+		return channel;
 	}
 	
 	private int errors;
@@ -293,40 +322,58 @@ public class DemodMessage {
 		return level;
 	}
 	
-	private String message;
-	public String getMessage() {
-		return message;
-	}
-	
-	/* parameters passed on from RawMessage */
-	private Date time;
-	public Date getTime() {
-		return time;
-	}
-	
-	private int channel;
-	public int getChannel() {
-		return channel;
-	}
-	
-	/* the unformatted ACARS message */
 	private byte[] raw;
+	public byte[] getRaw() {
+		return raw;
+	}
 	
 	/**
 	 * Constructor
 	 * @param time			Time message was received.
 	 * @param channel		Audio channel it was received on.
-	 * @param level			Message level.
+	 * @param level			Message signal level.
 	 * @param errors		Error count.
 	 * @param raw			Byte array containing the raw message.
 	 */
 	public DemodMessage(Date time, int channel, int level, int errors, byte[] raw) {
 		this.time = time;
 		this.channel = channel;
-		this.level = level;
 		this.errors = errors;
+		this.level = level;
 		this.raw = raw;
+		state = MessageState.UNPARSED;
+	}
+	
+	private void verifyState() {
+		switch (state) {
+		case UNPARSED:
+			throw new IllegalStateException("Message has not been parsed.");
+		case BAD:
+			throw new IllegalStateException("Message could not be parsed.");
+		case GOOD:
+			break;
+		}
+	}
+	
+	/**
+	 * Parse this message into its various fields. This is done separate from
+	 * construction, so that the construction phase is simpler and faster.
+	 * @return				Whether or not parsing was successful.
+	 */
+	public boolean parse() {
+		/* refuse to parse twice */
+		if (state != MessageState.UNPARSED)
+			return state == MessageState.GOOD;
 		
+		/* ensure it's ASCII (as it must be) */
+		for (byte b : raw) {
+			if (b < 0) {
+				state = MessageState.BAD;
+				return false;
+			}
+		}
+		
+		/* parse */
 		mode = (char) raw[0];
 		registration = new String(raw, 1, 7, CHARSET);
 		acknowledge = (char) raw[8];
@@ -355,5 +402,9 @@ public class DemodMessage {
 		} else {
 			source = null;
 		}
+		
+		/* remember we parsed and return success */
+		state = MessageState.GOOD;
+		return true;
 	}
 }
