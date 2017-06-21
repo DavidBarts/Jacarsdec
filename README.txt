@@ -4,9 +4,9 @@ Java runs and can access a sound-input device.
 The biggest trick is determining the correct input device. If you run
 the command:
     java -cp jacarsdec.jar name.blackcap.jacarsdec.Main --list
-    
+
 You'll see a list something like:
-    
+
 Mixer: 0
 Name: Default Audio Device
 Vendor: Unknown Vendor
@@ -53,10 +53,22 @@ TargetDataLine ...").
 So, assuming I'd be using 1-channel input, the command for my computer
 would be:
     java -cp jacarsdec.jar name.blackcap.jacarsdec.Main 1 0
-    
-You'll probably want to put this command in a batch file or a shell
-script so you won't have to specify the input information "by hand" each
-time.
+
+If the results seem unsatisfying, the gain may need to be adjusted on
+your audio input. This can be done via your computer's audio control
+panel or possibly via the --gain option (note that the latter only works
+on audio devices that support setting the gain; not all do).
+
+The best way to set the gain is to run Jacarsdec with the --verbose
+option; this will log the minimum, maximum, mean, and number of samples
+in each chunk of data read from the audio card. Note that the digitized
+audio is represented by floating point numbers between -1.0 and 1.0. Try
+adjusting the gain so that the maximum and minimum values get close to
+-1.0 and +1.0 respectively but do not actually reach these values.
+
+You'll probably want to put the resulting invocation command in a batch
+file or a shell script so you won't have to specify the input
+information "by hand" each time.
 
 If your input device has multiple channels (the most common case being a
 stereo input, which has separate left and right channels), then you may
