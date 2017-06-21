@@ -1,5 +1,6 @@
 This is a sound-card ACARS decoder in Java. It should run anywhere that
-Java runs and can access a sound-input device.
+Java runs and can access a sound-input device. It requires a separate
+receiver that can tune the aircraft band.
 
 The biggest trick is determining the correct input device. If you run
 the command:
@@ -80,7 +81,7 @@ input device with the specified number of channels.
 
 Channels are specified by a 0-based number. The industry standard for
 assigning channel numbers to a stereo input is to assign the left
-channel the lower number. So 0=left, 1==right. If you don't specify any
+channel the lower number. So 0=left, 1=right. If you don't specify any
 channel numbers for a stereo input, Jacarsdec will listen on channel 0
 (left) only. Note that if you connect a monaural audio patch cable to a
 stereo input, the audio will end up on the left channel, so the defaults
@@ -114,3 +115,9 @@ value), and the default output (demod data) buffer size is the input
 size multiplied by the number of channels being demodulated. If no
 amount of increasing buffer sizes seems to cure this problem, it means
 your computer is too slow.
+
+One last thing, DISABLE THE SQUELCH on your receiver. ACARS sends data
+at 2400 baud, and the data start virtually as soon as the transmission
+begins. Thus the tiny time delay caused by the squelch turning the audio
+on means enough lost data that it is impossible to properly decode the
+message.
