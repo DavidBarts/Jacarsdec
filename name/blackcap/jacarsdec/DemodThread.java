@@ -6,14 +6,11 @@
 
 package name.blackcap.jacarsdec;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-
 /**
  * Given some digitized audio from a single audio channel of input,
  * demodulate it into an ACARS message.
  * 
- * @author davidb
+ * @author	David Barts <david.w.barts@gmail.com>
  *
  */
 public class DemodThread extends Thread {
@@ -23,13 +20,14 @@ public class DemodThread extends Thread {
 	
 	private RawMessage rawMessage;
 	
-	private static final int FLEN = 11;
+	private static final int BAUD = 2400;
 	private static final double PLLKa = 1.8991680918e+02;
 	private static final double PLLKb = 9.8503292076e-01;
 	private static final double PLLKc = 0.9995;
 	private static final double DCCF = 0.02;
 	private static final int MAXPERR = 2;
 	
+	private int frameLength;
 	private double mskFreq, mskPhi, mskClk, mskDf, mskKa, mskA, mskDc;
 	private int mskS, idx;
 	private double[] h, I, Q;
@@ -70,6 +68,7 @@ public class DemodThread extends Thread {
 		initMsk();
 		initAcars();
 		rawMessage = null;
+		boolean verbose = Main.cmdLine.hasOption("verbose");
 		while (true) {
 			/* read, exit if interrupted or we get a null message */
 			try {
@@ -80,8 +79,35 @@ public class DemodThread extends Thread {
 			if (rawMessage == null)
 				break;
 			/* demodulate */
+			if (verbose)
+				displayRaw();
 			demodMsk();
 		}
+	}
+	
+	private void displayRaw() {
+		float[] buf = rawMessage.getMessage();
+		
+		/* this is pretty boring if the buffer is empty */
+		if (buf.length == 0) {
+			System.out.format("%tT.%<tL: N=%d%n", rawMessage.getTime(), 0);
+			return;
+		}
+		
+		/* normal case: report basic stats on buffer */
+		float total = 0.0f;
+		float min = Float.POSITIVE_INFINITY;
+		float max = Float.NEGATIVE_INFINITY;
+		for (float sample : buf) {
+			if (sample < min)
+				min = sample;
+			if (sample > max)
+				max = sample;
+			total += sample;
+		}
+		System.out.format("%tT.%<tL: N=%d, min=%f, max=%f, mean=%f%n",
+				rawMessage.getTime(),
+				buf.length, min, max, total/buf.length);
 	}
 	
 	private void demodMsk() {
@@ -102,11 +128,11 @@ public class DemodThread extends Thread {
 			if (mskClk > 3.0 * Math.PI/2.0) {
 				int j;
 				double iv, qv, bit;
-				mskClk = 3.0 * Math.PI / 2.0;
+				mskClk -= 3.0 * Math.PI / 2.0;
 				
 				/* matched filter */
-				for (j=0, iv=qv=0.0; j<FLEN; j++) {
-					int k = (idx + j) % FLEN;
+				for (j=0, iv=qv=0.0; j<frameLength; j++) {
+					int k = (idx + j) % frameLength;
 					iv += h[j] * I[k];
 					qv += h[j] * Q[k];
 				}
@@ -122,9 +148,9 @@ public class DemodThread extends Thread {
 				mskS = (mskS + 1) & 3;
 				
 				/* PLL */
-				dphi *= mskKa;
-				mskDf = PLLKc * mskDf + dphi - PLLKb * mskA;
-				mskA = dphi;
+				//dphi *= mskKa;
+				//mskDf = PLLKc * mskDf + dphi - PLLKb * mskA;
+				//mskA = dphi;
 			}
 			
 			/* DC blocking */
@@ -135,7 +161,7 @@ public class DemodThread extends Thread {
 			/* FI */
 			I[idx] = s * Math.cos(p);
 			Q[idx] = s * Math.sin(p);
-			idx = (idx + 1) % FLEN;
+			idx = (idx + 1) % frameLength;
 		}
 	}
 	
@@ -145,12 +171,16 @@ public class DemodThread extends Thread {
 		mskS = idx = 0;
 		mskKa = PLLKa / rate;
 		mskDf = mskA = mskDc = 0.0;
-		I = new double[FLEN];
-		Q = new double[FLEN];
-		h = new double[FLEN];
 		
-		for (int i=0; i < FLEN; i++) {
-			h[i] = Math.cos(2.0 * Math.PI * 600.0 / rate * (i-FLEN/2));
+		/* our frame needs to hold 2 bits worth of samples */
+		frameLength = 2 * (int) rate;
+		frameLength = frameLength / BAUD + frameLength % BAUD > 0 ? 1 : 0;
+		I = new double[frameLength];
+		Q = new double[frameLength];
+		h = new double[frameLength];
+		
+		for (int i=0; i < frameLength; i++) {
+			h[i] = Math.cos(2.0 * Math.PI * 600.0 / rate * (i-frameLength/2));
 			I[i] = Q[i] = 0.0;
 		}
 	}
@@ -178,7 +208,8 @@ public class DemodThread extends Thread {
 	}
 	
 	private void putbit(double v) {
-		outbits >>>= 1;
+		/* XXX: this his how to right-logical-shift a byte in Java */
+		outbits = (byte) ((outbits & 0xff) >> 1);
 		if (v > 0.0)
 			outbits |= 0x80;
 		nbits--;
@@ -236,6 +267,7 @@ public class DemodThread extends Thread {
 				if (blkErr > MAXPERR + 1) {
 					state = AcarsState.WSYN;
 					nbits = 1;
+					demodBuf.clear();
 					return;
 				}
 			}
@@ -271,7 +303,7 @@ public class DemodThread extends Thread {
 			
 		case END:
 			state = AcarsState.WSYN;
-			mskDf = 0;
+			mskDf = 0.0;
 			nbits = 8;
 			return;
 		}
@@ -284,8 +316,9 @@ public class DemodThread extends Thread {
 		/* get this raw message, allocate buffer for next one, reject runts */
 		byte[] buf = demodBuf.toArray();
 		demodBuf = new DemodBuffer();
-		if (buf.length < 13)
+		if (buf.length < 13) {
 			return;
+		}
 		
 		/* force STX/ETX */
 		buf[12] &= ETX | STX;
@@ -295,14 +328,15 @@ public class DemodThread extends Thread {
 		int pn = 0;
 		int[] pr = new int[MAXPERR];
 		for (int i=0; i<buf.length; i++) {
-			if ((NUMBITS[buf[i]] & 1) == 0) {
+			if ((NUMBITS[buf[i]&0xff] & 1) == 0) {
 				if (pn < MAXPERR)
 					pr[pn] = i;
 				pn++;
 			}
 		}
-		if (pn > MAXPERR)
+		if (pn > MAXPERR) {
 			return;
+		}
 		blkErr = pn;
 		AcarsCrc c = new AcarsCrc();
 		for (byte b : buf) {
@@ -318,7 +352,7 @@ public class DemodThread extends Thread {
 		
 		/* redo parity checking and remove parity bits */
 		for (int i=0; i<buf.length; i++) {
-			if ((NUMBITS[buf[i]] & 1) == 0) {
+			if ((NUMBITS[buf[i]&0xff] & 1) == 0) {
 				System.err.format("%s: parity check failure on channel %d%n",
 						Main.MYNAME, rawMessage.getChannel());
 				return;
@@ -327,11 +361,10 @@ public class DemodThread extends Thread {
 		}
 		
 		/* send message to output thread */
-		int blkLvl = (int) (20.0 * Math.log10(mskDc) - 48.0);
 		DemodMessage demodMessage = new DemodMessage(
 				rawMessage.getTime(),
 				rawMessage.getChannel(),
-				blkLvl, blkErr, buf);
+				blkErr, buf);
 		if (out.write(demodMessage))
 			System.err.format("%s: demod data lost on channel %d%n",
 					Main.MYNAME, rawMessage.getChannel());

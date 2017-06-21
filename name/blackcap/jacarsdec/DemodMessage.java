@@ -317,11 +317,6 @@ public class DemodMessage {
 		return errors;
 	}
 	
-	private int level;
-	public int getLevel() {
-		return level;
-	}
-	
 	private byte[] raw;
 	public byte[] getRaw() {
 		return raw;
@@ -335,11 +330,10 @@ public class DemodMessage {
 	 * @param errors		Error count.
 	 * @param raw			Byte array containing the raw message.
 	 */
-	public DemodMessage(Date time, int channel, int level, int errors, byte[] raw) {
+	public DemodMessage(Date time, int channel, int errors, byte[] raw) {
 		this.time = time;
 		this.channel = channel;
 		this.errors = errors;
-		this.level = level;
 		this.raw = raw;
 		state = MessageState.UNPARSED;
 	}
@@ -385,20 +379,21 @@ public class DemodMessage {
 			messageId = null;
 			flightId = null;
 		} else if (mode <= 'Z' && blockId <= '9') {
-			int len = raw.length - Integer.min(raw.length, k+4);
+			int len = Integer.min(raw.length, k+4) - k;
 			messageId = new String(raw, k, len, CHARSET);
 			k += len;
-			len = raw.length - Integer.min(raw.length, k+6);
+			len = Integer.min(raw.length, k+6) - k;
 			flightId = new String(raw, k, len, CHARSET);
 			k += len;
 		}
-		message = new String(raw, k, raw.length-k, CHARSET);
+		int len = Integer.max(0, raw.length - k - 1);
+		message = new String(raw, k, len, CHARSET);
 		if (label.equals("H1")) {
 			int mesh = message.indexOf((int) '#');
 			if (mesh == -1 || mesh > 3 || message.length() - mesh < 3)
 				source = null;
 			else
-				source = message.substring(mesh+1, 2);
+				source = message.substring(mesh+1, mesh+3);
 		} else {
 			source = null;
 		}

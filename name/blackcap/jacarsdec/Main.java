@@ -45,6 +45,8 @@ public class Main {
 		options.addOption(new Option("h", "help", false, "Print this help message."));
 		options.addOption(new Option("l", "list", false, "List available audio devices and exit."));
 		options.addOption(new Option("q", "quiet", false, "Suppress start-up messages."));
+		options.addOption(new Option("v", "verbose", false, "Show some debug info."));
+		options.addOption(new Option("g", "gain", true, "Audio gain."));
 		try {
 			cmdLine = (new DefaultParser()).parse(options, args);
 		} catch (org.apache.commons.cli.ParseException e) {
@@ -196,11 +198,42 @@ public class Main {
 			}
 		}
 		
+		// Set gain if requested
+		String rgain = cmdLine.getOptionValue("gain");
+		if (rgain != null) {
+			float gain = 0.0f;
+			try {
+				gain = Float.parseFloat(rgain);
+			} catch (NumberFormatException e) {
+				System.err.format("%s: invalid gain: %s%n", MYNAME, rgain);
+				System.exit(1);
+			}
+			Control.Type[] types = { FloatControl.Type.MASTER_GAIN, FloatControl.Type.VOLUME };
+			boolean found = false;
+			for (Control.Type type : types) {
+				if (line.isControlSupported(type)) {
+					FloatControl gainControl = (FloatControl) line.getControl(type);
+					try {
+						gainControl.setValue(gain);
+					} catch (IllegalArgumentException e) {
+						System.err.format("%s: invalid gain: %s%n", MYNAME, rgain);
+						System.exit(1);
+					}
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				System.err.format("%s: no gain control available%n", MYNAME);
+				System.exit(1);
+			}
+		}
+		
 		// Get the channels to actually select. Default is to just select
 		// channel 0 (left).
 		int[] select;
-		if (cmdLine.hasOption("select")) {
-			String rselect = cmdLine.getOptionValue("select");
+		String rselect = cmdLine.getOptionValue("select");
+		if (rselect != null) {
 			int commas = 0;
 			for(int i=0; i < rselect.length(); i++) {
 				if (rselect.charAt(i) == ',')

@@ -58,6 +58,13 @@ public class DemodBuffer {
 		}
 		length -= count;
 	}
+	
+	/**
+	 * Clear this buffer.
+	 */
+	public void clear() {
+		length = 0;
+	}
 
 	/**
 	 * Obtain a new array containing the bytes in the buffer. The array

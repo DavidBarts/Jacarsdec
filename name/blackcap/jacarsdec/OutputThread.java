@@ -9,24 +9,27 @@ package name.blackcap.jacarsdec;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
+/**
+ * Format and print demodulated ACARS to standard output.
+ * 
+ * @author David Barts <david.w.barts@gmail.com>
+ *
+ */
 public class OutputThread extends Thread {
 	private Channel<DemodMessage> in;
 	private DemodMessage demodMessage;
 	
-	private static final SimpleDateFormat LOCAL = new SimpleDateFormat("yyyy-MMM-dd'T'HH:mm:ss'J'");
-	private static final SimpleDateFormat UTC = new SimpleDateFormat("yyyy-MMM-dd'T'HH:mm:ss'Z'");
+	private static final SimpleDateFormat LOCAL = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'J'");
+	private static final SimpleDateFormat UTC = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	static {
 		UTC.setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
-	
-	private static final String NL = System.lineSeparator();
 	
 	public OutputThread(Channel<DemodMessage> in) {
 		this.in = in;
 	}
 
 	public void run() {
-		/* not finished, so currently a no-op */
 		demodMessage = null;
 		while (true) {
 			try {
@@ -36,7 +39,7 @@ public class OutputThread extends Thread {
 			}
 			if (demodMessage == null)
 				break;
-		printMessage();
+			printMessage();
 		}
 	}
 	
@@ -51,15 +54,14 @@ public class OutputThread extends Thread {
 		}
 		
 		/* our standard header */
-		System.out.format("%n[#%d L:%d E:%d %s %s ----------]%n",
+		System.out.format("%n[#%d E:%d %s %s ----------]%n",
 				demodMessage.getChannel(),
-				demodMessage.getLevel(),
 				demodMessage.getErrors(),
 				LOCAL.format(demodMessage.getTime()),
 				UTC.format(demodMessage.getTime()));
 		
 		/* the ACARS header */
-		if (demodMessage.getMode() == 0x5d) {
+		if (demodMessage.getMode() < 0x5d) {
 			System.out.print("Aircraft registration: ");
 			seeString(demodMessage.getRegistration());
 			System.out.print(" Flight ID: ");
@@ -79,9 +81,7 @@ public class OutputThread extends Thread {
 		
 		System.out.print("Block ID: ");
 		seeChar(demodMessage.getBlockId());
-		System.out.println();
-		
-		System.out.print("Ack: ");
+		System.out.print(" Ack: ");
 		seeChar(demodMessage.getAcknowledge());
 		System.out.println();
 		

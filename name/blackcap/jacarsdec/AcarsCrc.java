@@ -317,7 +317,7 @@ public class AcarsCrc {
 	 * @param c			Byte value.
 	 */
 	public void update(byte c) {
-		crc = (short) ((crc >>> 8) ^ CCITT_TABLE[(crc^c)&0xff]);
+		crc = (short) (((crc & 0xffff) >> 8) ^ CCITT_TABLE[(crc^c)&0xff]);
 	}
 	
 	/**
@@ -337,7 +337,7 @@ public class AcarsCrc {
 		if (length > 0) {
 			for (int i=0; i<8; i++) {
 				if (doFixErrors(msg,
-						(short) (c^SYNDROM[i+8*(msg.length-pr[start]+1)]),
+						(short) ((c&0xffff)^SYNDROM[i+8*(msg.length-pr[start]+1)]),
 						pr, start+1, length-1)) {
 					msg[pr[start]] ^= (1 << i);
 					return true;
@@ -348,7 +348,7 @@ public class AcarsCrc {
 			if (c == 0)
 				return true;
 			for (int i=0; i<16; i++) {
-				if (SYNDROM[i] == c)
+				if (SYNDROM[i] == (c & 0xffff))
 					return true;
 			}
 			return false;
