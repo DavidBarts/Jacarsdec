@@ -1,6 +1,10 @@
+INTRODUCTION
+
 This is a sound-card ACARS decoder in Java. It should run anywhere that
 Java runs and can access a sound-input device. It requires a separate
 receiver that can tune the aircraft band.
+
+RUNNING JACARSDEC
 
 The biggest trick is determining the correct input device. If you run
 the command:
@@ -121,3 +125,9 @@ at 2400 baud, and the data start virtually as soon as the transmission
 begins. Thus the tiny time delay caused by the squelch turning the audio
 on means enough lost data that it is impossible to properly decode the
 message.
+
+BUILDING JACARSDEC
+
+Just compile everything under the src directory. Compiling Main.java
+should make everything else get built. Note that the Apache Commons CLI
+library is required.
