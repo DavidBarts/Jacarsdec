@@ -7,7 +7,6 @@
 package name.blackcap.jacarsdec;
 
 import java.nio.ByteOrder;
-import java.text.ParseException;
 import java.util.ArrayList;
 
 import javax.sound.sampled.*;
@@ -27,13 +26,6 @@ public class Main {
 	
 	public static CommandLine cmdLine;
 	
-	private static class LineSpecifierException extends Exception {
-		public LineSpecifierException() { super(); }
-		public LineSpecifierException(String message) { super(message); }
-		public LineSpecifierException(String message, Throwable cause) { super(message, cause); }
-		public LineSpecifierException(Throwable cause) { super(cause); }
-	}
-
 	public static void main(String[] args) {
 		// Parse command-line options
 		Options options = new Options();

@@ -44,21 +44,23 @@ public class OutputThread extends Thread {
 	}
 	
 	private void printMessage() {
-		/* attempt to parse message, bail if we can't */
-		if (!demodMessage.parse()) {
-			System.err.format("%s: mangled message:", Main.MYNAME);
-			for (byte b: demodMessage.getRaw())
-				System.err.format(" %02x", b);
-			System.err.println();
-			return;
-		}
-		
 		/* our standard header */
 		System.out.format("%n[#%d E:%d %s %s ----------]%n",
 				demodMessage.getChannel(),
 				demodMessage.getErrors(),
 				LOCAL.format(demodMessage.getTime()),
 				UTC.format(demodMessage.getTime()));
+		
+		/* attempt to parse message, do a hex dump if we can't */
+		if (!demodMessage.parse()) {
+			System.out.print("Unparseable message :");
+			int i = 0;
+			for (byte b: demodMessage.getRaw()) {
+				System.out.format(i++ % 24 == 0 ? "%n%02x" : " %02x", b);
+			}
+			System.out.println();
+			return;
+		}
 		
 		/* the ACARS header */
 		if (demodMessage.getMode() < 0x5d) {

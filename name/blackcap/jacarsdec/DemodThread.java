@@ -125,10 +125,10 @@ public class DemodThread extends Thread {
 				p -= 2.0 * Math.PI;
 			mskPhi = p;
 			
-			if (mskClk > 3.0 * Math.PI/2.0) {
+			if (mskClk > 1.5 * Math.PI) {
 				int j;
 				double iv, qv, bit;
-				mskClk -= 3.0 * Math.PI / 2.0;
+				mskClk -= 1.5 * Math.PI;
 				
 				/* matched filter */
 				for (j=0, iv=qv=0.0; j<frameLength; j++) {
@@ -166,7 +166,7 @@ public class DemodThread extends Thread {
 	}
 	
 	private void initMsk() {
-		mskFreq = 1800.0 / rate * 2.0 * Math.PI;
+		mskFreq = 0.75 * (double) BAUD / rate * 2.0 * Math.PI;
 		mskPhi = mskClk = 0.0;
 		mskS = idx = 0;
 		mskKa = PLLKa / rate;
