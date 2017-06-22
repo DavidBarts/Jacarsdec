@@ -83,7 +83,7 @@ public class OutputThread extends Thread {
 		
 		System.out.print("Block ID: ");
 		seeChar(demodMessage.getBlockId());
-		System.out.print(" Ack: ");
+		System.out.print(" Acknowledge: ");
 		seeChar(demodMessage.getAcknowledge());
 		System.out.println();
 		
