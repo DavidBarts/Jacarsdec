@@ -4,6 +4,10 @@ This is a sound-card ACARS decoder in Java. It should run anywhere that
 Java runs and can access a sound-input device. It requires a separate
 receiver that can tune the aircraft band.
 
+This is a "terminal" or "console" application, not a GUI-based program.
+To run it, you will have to figure out how to open a terminal or command
+prompt window.
+
 RUNNING JACARSDEC
 
 The biggest trick is determining the correct input device. If you run
@@ -131,3 +135,23 @@ BUILDING JACARSDEC
 Just compile everything under the src directory. Compiling Main.java
 should make everything else get built. Note that the Apache Commons CLI
 library is required.
+
+UP-ARROW NOTATION
+
+If a message contains unprintable ASCII characters (note that ACARS is a
+US-ASCII-only protocol; eight-bit and multibyte characters cannot be
+sent), Jacarsdec will use "uparrow notation" to represent them, e.g.
+bell (alert, control-G) characters print as ^G, carriage returns
+(control-M) will print as ^M, negative-acknowledge characters (NAK,
+control-U) print as ^U, and delete characters print as ^?.
+
+You will most commonly see this in the Acknowledge field, which is set
+to a NAK (^U) when a message does not acknowledge any other message, and
+the message label field, which is set to an underscore followed by a
+delete character (_^?) for an acknowledgement-only message with an empty
+body. Occasionally you'll see them in the message body, which sometimes
+contains "junky" characters that can mess up output (or in the case of
+bell characters, make annoying noises).
+
+Newline sequences in the message body will be recognized and print as
+whatever is appropriate for a newline on your system.

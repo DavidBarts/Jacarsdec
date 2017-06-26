@@ -350,11 +350,10 @@ public class DemodMessage {
 	}
 	
 	/*
-	 * Note that the following could easily be made thread-safe by having
-	 * the initial refusal to parse twice being unsynchronized, then putting
-	 * the rest of the logic into a private synchronized doParse() method.
-	 * Currently there is no need for this, as there is only one consumer
-	 * thread for these messages.
+	 * Despite not being synchronized, the following method is thread-safe;
+	 * each parallel-running instance will get its own local variables and
+	 * set the instance variables to the same values. This is admittedly
+	 * inefficient, but harmless, and synchronization has its own costs.
 	 */
 	
 	/**
@@ -366,6 +365,12 @@ public class DemodMessage {
 		/* refuse to parse twice */
 		if (state != MessageState.UNPARSED)
 			return state == MessageState.GOOD;
+		
+		/* runt packets are not parseable */
+		if (raw.length < 13) {
+			state = MessageState.BAD;
+			return false;
+		}
 		
 		/* ensure it's ASCII (as it must be) */
 		for (byte b : raw) {
