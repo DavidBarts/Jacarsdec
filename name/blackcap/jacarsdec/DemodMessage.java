@@ -349,6 +349,14 @@ public class DemodMessage {
 		}
 	}
 	
+	/*
+	 * Note that the following could easily be made thread-safe by having
+	 * the initial refusal to parse twice being unsynchronized, then putting
+	 * the rest of the logic into a private synchronized doParse() method.
+	 * Currently there is no need for this, as there is only one consumer
+	 * thread for these messages.
+	 */
+	
 	/**
 	 * Parse this message into its various fields. This is done separate from
 	 * construction, so that the construction phase is simpler and faster.

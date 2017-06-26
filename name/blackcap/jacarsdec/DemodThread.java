@@ -21,6 +21,8 @@ public class DemodThread extends Thread {
 	private RawMessage rawMessage;
 	
 	private static final int BAUD = 2400;
+	private static final int ACARS_MAX = 240;  /* max message length */
+	
 	private static final double PLLKa = 1.8991680918e+02;
 	private static final double PLLKb = 9.8503292076e-01;
 	private static final double PLLKc = 0.9995;
@@ -287,6 +289,13 @@ public class DemodThread extends Thread {
 				putMsg();
 				return;
 			}
+			if (demodBuf.length() > ACARS_MAX) {
+				state = AcarsState.WSYN;
+				//mskDf = 0.0;
+				nbits = 1;
+				demodBuf.clear();
+				return;
+			}
 			nbits = 8;
 			return;
 			
@@ -315,7 +324,7 @@ public class DemodThread extends Thread {
 		
 		/* get this raw message, allocate buffer for next one, reject runts */
 		byte[] buf = demodBuf.toArray();
-		demodBuf = new DemodBuffer();
+		demodBuf.clear();
 		if (buf.length < 13) {
 			return;
 		}

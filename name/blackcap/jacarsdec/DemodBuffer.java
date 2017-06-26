@@ -7,26 +7,25 @@
 package name.blackcap.jacarsdec;
 
 import java.util.Arrays;
+import java.nio.BufferOverflowException;
 
 /**
  * This is a simplified version of ByteBuffer that can do one thing
- * the former cannot do: un-put things. The buffer will expand dynamically
- * as needed.
+ * the former cannot do: un-put things. The fixed capacity of 256 is
+ * a little more than we need; ACARS packets are a maximum of 240
+ * data bytes.
  * 
  * @author David Barts <david.w.barts@gmail.com>
  *
  */
 public class DemodBuffer {
-	// maybe increase this to 256 later?
-	private static final int ICAP = 64;
-	
-	private int capacity;
+	private static final int CAPACITY = 256;
+
 	private int length;
 	private byte[] buf;
 	
 	public DemodBuffer() {
-		buf = new byte[ICAP];
-		capacity = ICAP;
+		buf = new byte[CAPACITY];
 		length = 0;
 	}
 	
@@ -36,9 +35,8 @@ public class DemodBuffer {
 	 * @param b			Byte to put.
 	 */
 	public void put(byte b) {
-		if (length >= capacity) {
-			capacity *= 2;
-			buf = Arrays.copyOf(buf, capacity);
+		if (length >= CAPACITY) {
+			throw new BufferOverflowException();
 		}
 		buf[length++] = b;
 	}
@@ -54,7 +52,7 @@ public class DemodBuffer {
 			throw new IllegalArgumentException("unPut count of " + count + "is negative");
 		}
 		if (count > length) {
-			throw new IllegalArgumentException("unPut count of " + count + "exceeds capacity");
+			throw new IllegalArgumentException("unPut count of " + count + "exceeds length");
 		}
 		length -= count;
 	}
