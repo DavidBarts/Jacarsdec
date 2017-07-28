@@ -8,6 +8,21 @@ This is a "terminal" or "console" application, not a GUI-based program.
 To run it, you will have to figure out how to open a terminal or command
 prompt window.
 
+JAVA REQUIRED
+
+Because this is a Java program, you need a Java interpreter (version
+1.8 minimum) to run it.  If you don't have one already installed,
+you can download the Java Runtime Environment (JRE) for free at
+https://java.com/download .
+
+Since Java interpreters are available for Linux, Macs, and Windows,
+that means Jacarsdec runs equally well on all three systems. Major win!
+
+(There's a confusing variety of Java software available for download.
+If all you want to do is run this program, the smallest, most
+lightweight option available is the JRE. The other packages are
+primarily for developers who want to write their own Java programs.)
+
 RUNNING JACARSDEC
 
 The biggest trick is determining the correct input device. If you run
