@@ -151,11 +151,11 @@ Just compile everything under the src directory. Compiling Main.java
 should make everything else get built. Note that the Apache Commons CLI
 library is required.
 
-UP-ARROW NOTATION
+CARET NOTATION
 
 If a message contains unprintable ASCII characters (note that ACARS is a
 US-ASCII-only protocol; eight-bit and multibyte characters cannot be
-sent), Jacarsdec will use "uparrow notation" to represent them, e.g.
+sent), Jacarsdec will use "caret notation" to represent them, e.g.
 bell (alert, control-G) characters print as ^G, carriage returns
 (control-M) will print as ^M, negative-acknowledge characters (NAK,
 control-U) print as ^U, and delete characters print as ^?.
