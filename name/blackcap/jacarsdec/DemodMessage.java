@@ -385,7 +385,7 @@ public class DemodMessage {
 		registration = new String(raw, 1, 7, CHARSET);
 		acknowledge = (char) raw[8];
 		label = new String(raw, 9, 2, CHARSET);
-		blockId = raw[11] == 0 ? ' ' : (char) raw[11];
+		blockId = (char) raw[11];
 		byte blockStart = raw[12];
 		int k = 13;
 		if (blockStart == 3) {
