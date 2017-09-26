@@ -39,6 +39,7 @@ public class Main {
 		options.addOption(new Option("q", "quiet", false, "Suppress start-up messages."));
 		options.addOption(new Option("v", "verbose", false, "Show some debug info."));
 		options.addOption(new Option("g", "gain", true, "Audio gain."));
+		options.addOption(new Option("p", "post", false, "Send HTTP POST request to configured server instead of printing."));
 		try {
 			cmdLine = (new DefaultParser()).parse(options, args);
 		} catch (org.apache.commons.cli.ParseException e) {

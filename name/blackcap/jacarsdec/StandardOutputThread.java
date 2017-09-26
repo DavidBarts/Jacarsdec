@@ -15,7 +15,7 @@ import java.util.TimeZone;
  * @author David Barts <david.w.barts@gmail.com>
  *
  */
-public class OutputThread extends Thread {
+public class StandardOutputThread extends Thread {
 	private Channel<DemodMessage> in;
 	private DemodMessage demodMessage;
 	
@@ -25,7 +25,7 @@ public class OutputThread extends Thread {
 		UTC.setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
 	
-	public OutputThread(Channel<DemodMessage> in) {
+	public StandardOutputThread(Channel<DemodMessage> in) {
 		this.in = in;
 	}
 

@@ -322,6 +322,15 @@ public class DemodMessage {
 		return raw;
 	}
 	
+	public String getRawAsString() {
+		for (byte b : raw) {
+			if (b < 0) {
+				return null;
+			}
+		}
+		return new String(raw, CHARSET);
+	}
+	
 	/**
 	 * Constructor
 	 * @param time			Time message was received.
