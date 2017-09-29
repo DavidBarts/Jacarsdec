@@ -6,8 +6,13 @@
 
 package name.blackcap.jacarsdec;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import javax.sound.sampled.*;
 import org.apache.commons.cli.*;
@@ -39,11 +44,11 @@ public class Main {
         options.addOption(new Option("q", "quiet", false, "Suppress start-up messages."));
         options.addOption(new Option("v", "verbose", false, "Show some debug info."));
         options.addOption(new Option("g", "gain", true, "Audio gain."));
-        options.addOption(new Option("p", "post", false, "Send HTTP POST request to configured server instead of printing."));
+        options.addOption(new Option("p", "post", true, "HTTP POST mode, expects properties file."));
         try {
             cmdLine = (new DefaultParser()).parse(options, args);
         } catch (org.apache.commons.cli.ParseException e) {
-            System.err.println(MYNAME + ": " + e.getMessage());
+            System.err.println(MYNAME + ": " + getMessage(e));
             System.exit(2);
         }
         if (cmdLine.hasOption("help")) {
@@ -98,7 +103,7 @@ public class Main {
         // Get mixer and line IDs
         String[] args = cmdLine.getArgs();
         if (args.length != 2) {
-            System.err.println(MYNAME + ": expecting mixer and line IDs");
+            System.err.format("%s: expecting mixer and line IDs%n", MYNAME);
             System.exit(1);
         }
         int mixerId = toInt("mixer", args[0]);
@@ -126,7 +131,7 @@ public class Main {
         try {
             line = (TargetDataLine) mixer.getLine(li);
         } catch (LineUnavailableException|IllegalArgumentException|SecurityException e) {
-            System.err.format("%s: %s%n", MYNAME, e.getMessage());
+            System.err.format("%s: %s%n", MYNAME, getMessage(e));
             System.exit(1);
         }
 
@@ -170,7 +175,7 @@ public class Main {
                 }
             }
             if (badOpen != null) {
-                System.err.format("%s: %s%n", MYNAME, badOpen.getMessage());
+                System.err.format("%s: %s%n", MYNAME, getMessage(badOpen));
                 System.exit(1);
             }
         } else {
@@ -186,7 +191,7 @@ public class Main {
             try {
                 line.open(format);
             } catch (LineUnavailableException|IllegalArgumentException|IllegalStateException|SecurityException e) {
-                System.err.format("%s: %s%n", MYNAME, e.getMessage());
+                System.err.format("%s: %s%n", MYNAME, getMessage(e));
                 System.exit(1);
             }
         }
@@ -269,7 +274,25 @@ public class Main {
         for (int i=0; i<demods.length; i++) {
             demods[i] = new DemodThread(inChans.get(i), outChan, (float) RATE);
         }
-        OutputThread writer = new OutputThread(outChan);
+        Thread writer = null;
+        String propsFile = cmdLine.getOptionValue("post");
+        if (propsFile == null) {
+            writer = new StandardOutputThread(outChan);
+        } else {
+            Properties props = new Properties();
+            try (BufferedReader rdr = new BufferedReader(new FileReader(propsFile))) {
+                props.load(rdr);
+            } catch (IOException e) {
+                System.err.format("%s: unable to load properties - %s%n", MYNAME, getMessage(e));
+                System.exit(1);
+            }
+            try {
+                writer = new HttpOutputThread(outChan, props);
+            } catch (IllegalArgumentException|MalformedURLException e) {
+                System.err.format("%s: %s%n", MYNAME, getMessage(e));
+                System.exit(1);
+            }
+        }
 
         // Log some standard start messages, unless in quiet mode
         if (!cmdLine.hasOption("quiet")) {
@@ -322,5 +345,12 @@ public class Main {
             }
         }
         return -1;  /* here just to make Java happy */
+    }
+
+    public static String getMessage(Throwable e) {
+        String ret = e.getMessage();
+        if (ret == null)
+            ret = e.getClass().getCanonicalName();
+        return ret;
     }
 }
