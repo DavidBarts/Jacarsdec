@@ -49,7 +49,7 @@ public class HttpOutputThread extends Thread {
     private static final int SHA1_LEN = 20;
     private static final int SHA256_LEN = 32;
 
-    private static final SimpleDateFormat JSON_TIME = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'");
+    private static final SimpleDateFormat JSON_TIME = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     static {
         JSON_TIME.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
