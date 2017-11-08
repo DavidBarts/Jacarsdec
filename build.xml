@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Jacarsdec" default="help" basedir=".">
+  <!-- import all environment variables as env.* -->
+  <property environment="env"/>
+
+  <!-- ensure required environment variables are set -->
+  <macrodef name="env-require">
+    <attribute name="name"/>
+    <sequential>
+      <fail message="Environment variable @{name} not set!">
+        <condition>
+          <not><isset property="env.@{name}"/></not>
+        </condition>
+      </fail>
+    </sequential>
+  </macrodef>
+  <env-require name="JRE_HOME"/>
+
+  <!-- cribbed from https://stackoverflow.com/questions/7129672/uppercase-lowercase-capitalize-an-ant-property -->
+  <scriptdef language="javascript" name="toLowerCase">
+    <attribute name="value" />
+    <attribute name="target" />
+    <![CDATA[
+      project.setProperty( attributes.get( "target" ),
+                           attributes.get( "value" ).toLowerCase() );
+    ]]>
+  </scriptdef>
+
+  <!-- Define the properties used by the build -->
+  <property name="app.name"      value="${ant.project.name}"/>
+  <toLowerCase target="lc.app.name" value="${app.name}"/>
+  <property name="jar.name"      value="${basedir}/${lc.app.name}.jar"/>
+  <property name="work.home"     value="${basedir}/work"/>
+  <property name="lib.home"      value="${basedir}/lib"/>
+  <property name="src.home"      value="${basedir}/src"/>
+
+  <!-- help message -->
+  <target name="help">
+    <echo>You can use the following targets:</echo>
+    <echo> </echo>
+    <echo>  help    : (default) Prints this message </echo>
+    <echo>  all     : Cleans, compiles, and stages application</echo>
+    <echo>  clean   : Deletes work directories</echo>
+    <echo>  compile : Compiles servlets into class files</echo>
+    <echo>  jar     : Make JAR file.</echo>
+    <echo> </echo>
+    <echo>For example, to clean, compile, and package all at once, run:</echo>
+    <echo>prompt> ant all </echo>
+  </target>
+
+  <!-- Define the CLASSPATH -->
+  <target name="classpath">
+    <path id="std.classpath">
+      <fileset dir="${env.JRE_HOME}/lib">
+        <include name="tools.jar"/>
+      </fileset>
+      <fileset dir="${lib.home}">
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+    <path id="compile.classpath">
+      <path refid="std.classpath"/>
+      <pathelement location="${src.home}"/>
+    </path>
+    <path id="test.classpath">
+      <path refid="std.classpath"/>
+      <pathelement location="${work.home}"/>
+    </path>
+  </target>
+
+  <!-- do everything but install -->
+  <target name="all" depends="clean,jar"
+          description="Clean work dirs, compile, make JAR."/>
+
+  <!-- clean old cruft out of our way -->
+  <target name="clean"
+          description="Delete old work and dist directories.">
+    <delete dir="${work.home}"/>
+  </target>
+
+  <!-- make new dist and work trees -->
+  <target name="prepare" depends="clean"
+          description="Create working dirs and copy static files to work dir">
+    <mkdir dir="${work.home}"/>
+  </target>
+
+  <!-- compile *.java to *.class -->
+  <target name="compile" depends="prepare,classpath"
+          description="Compile Java sources to ${work.home}">
+    <javac srcdir="${src.home}" destdir="${work.home}" debug="true"
+           includeAntRuntime="false">
+      <classpath refid="compile.classpath"/>
+    </javac>
+  </target>
+
+  <!-- make .jar file -->
+  <target name="jar" depends="compile" description="Create JAR file.">
+    <jar destfile="${jar.name}">
+      <zipgroupfileset dir="${lib.home}" includes="*.jar"/>
+      <fileset dir="${work.home}"/>
+    </jar>
+  </target>
+
+</project>
