@@ -27,7 +27,7 @@ RUNNING JACARSDEC
 
 The biggest trick is determining the correct input device. If you run
 the command:
-    java -cp jacarsdec.jar name.blackcap.jacarsdec.Main --list
+    java -cp jacarsdec.jar info.koosah.jacarsdec.Main --list
 
 You'll see a list something like:
 
@@ -76,7 +76,7 @@ TargetDataLine ...").
 
 So, assuming I'd be using 1-channel input, the command for my computer
 would be:
-    java -cp jacarsdec.jar name.blackcap.jacarsdec.Main 1 0
+    java -cp jacarsdec.jar info.koosah.jacarsdec.Main 1 0
 
 If the results seem unsatisfying, the gain may need to be adjusted on
 your audio input. This can be done via your computer's audio control

@@ -4,7 +4,7 @@
  * repository for more information.
  */
 
-package name.blackcap.jacarsdec;
+package info.koosah.jacarsdec;
 
 /**
  * An ACARS message CRC, and common operations with it.

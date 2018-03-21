@@ -4,7 +4,7 @@
  * repository for more information.
  */
 
-package name.blackcap.jacarsdec;
+package info.koosah.jacarsdec;
 
 import java.util.Date;
 
