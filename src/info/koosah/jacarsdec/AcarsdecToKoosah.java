@@ -18,8 +18,8 @@ import org.apache.commons.cli.*;
 /**
  * Entry point for the utility that reads packets from acarsdec (not
  * Jacarsdec!) in -o 6 mode and sends them on to Koosah. This is here
- * as a quick and dirty way to enable cheap Linux boxes with RTL SDR's
- * to send data to us.
+ * as a quick and dirty way to enable Linux systems with RTL SDR's to
+ * send data to us.
  *
  * @author David Barts <david.w.barts@gmail.com>
  *
