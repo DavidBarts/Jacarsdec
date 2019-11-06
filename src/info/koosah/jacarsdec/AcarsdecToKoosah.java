@@ -134,6 +134,9 @@ public class AcarsdecToKoosah {
             hWriter.interrupt();
             System.exit(1);
         }
+
+        // Kill the writer thread
+        hWriter.interrupt();
     }
 
     public static String getMessage(Throwable e) {
