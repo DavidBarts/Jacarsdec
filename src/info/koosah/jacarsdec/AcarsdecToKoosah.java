@@ -16,7 +16,10 @@ import java.util.Properties;
 import org.apache.commons.cli.*;
 
 /**
- * Entry point.
+ * Entry point for the utility that reads packets from acarsdec (not
+ * Jacarsdec!) in -o 6 mode and sends them on to Koosah. This is here
+ * as a quick and dirty way to enable cheap Linux boxes with RTL SDR's
+ * to send data to us.
  *
  * @author David Barts <david.w.barts@gmail.com>
  *
@@ -29,7 +32,9 @@ public class AcarsdecToKoosah {
     public static CommandLine cmdLine;
 
     public static void main(String[] args) {
-        // Parse command-line options
+        // Parse command-line options. The ones for endianness should typically
+        // not be needed; by default, this code matches the native byte order
+        // sent by acarsdec -o 6.
         Options options = new Options();
         OptionGroup endianness = new OptionGroup();
         endianness.addOption(new Option("b", "big", false, "Input is big-endian."));
@@ -73,13 +78,11 @@ public class AcarsdecToKoosah {
         }
 
         // Determine byte order
-        ByteOrder order = null;
+        ByteOrder order = ByteOrder.nativeOrder();
         if (cmdLine.hasOption("big"))
             order = ByteOrder.BIG_ENDIAN;
         else if (cmdLine.hasOption("little"))
             order = ByteOrder.LITTLE_ENDIAN;
-        else
-            order = ByteOrder.nativeOrder();
 
         // Determine buffer size
         int bufSize = 50;
