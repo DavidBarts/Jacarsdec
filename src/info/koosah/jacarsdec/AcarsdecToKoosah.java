@@ -40,6 +40,7 @@ public class AcarsdecToKoosah {
         endianness.addOption(new Option("b", "big", false, "Input is big-endian."));
         endianness.addOption(new Option("l", "little", false, "Input is little-endian."));
         options.addOptionGroup(endianness);
+        options.addOption(new Option("d", "debug", false, "Debug mode, disassemble and print but don't send."));
         options.addOption(new Option("h", "help", false, "Print this help message."));
         options.addOption(new Option("s", "size", true, "Buffer size."));
         try {
@@ -97,15 +98,19 @@ public class AcarsdecToKoosah {
         }
 
         // Wire things up
-        Channel<DemodMessage> hChan = new Channel<DemodMessage>(bufSize);
-        HttpOutputThread hWriter = null;
-        try {
-            hWriter = new HttpOutputThread(hChan, props);
-        } catch (MalformedURLException e) {
-            System.err.format("%s: %s%n", MYNAME, getMessage(e));
-            System.exit(1);
+        Channel<DemodMessage> chan = new Channel<DemodMessage>(bufSize);
+        Thread writer = null;
+        if (cmdLine.hasOption("debug")) {
+            writer = new StandardOutputThread(chan);
+        } else {
+            try {
+                writer = new HttpOutputThread(chan, props);
+            } catch (IllegalArgumentException|MalformedURLException e) {
+                System.err.format("%s: %s%n", MYNAME, getMessage(e));
+                System.exit(1);
+            }
         }
-        hWriter.start();
+        writer.start();
 
         // Loop, processing our input
         byte[] rawHeader = new byte[HEADER_LEN];
@@ -115,28 +120,30 @@ public class AcarsdecToKoosah {
             while (true) {
                 header.clear();
                 int nread = System.in.read(rawHeader);
-                if (nread != HEADER_LEN)
+                if (nread != HEADER_LEN) {
                     break;
+                }
                 long sec = header.getLong();
                 int usec = header.getInt();
                 short channel = header.getShort();
                 short length = header.getShort();
                 byte[] body = new byte[length];
                 nread = System.in.read(body);
-                if (nread != length)
+                if (nread != length) {
                     break;
+                }
                 DemodMessage msg = new DemodMessage(
                     new Date(sec*1000 + usec/1000), (int) channel, 0, body);
-                hChan.write(msg);
+                chan.write(msg);
             }
         } catch (IOException e) {
             System.err.format("%s: %s%n", MYNAME, getMessage(e));
-            hWriter.interrupt();
+            writer.interrupt();
             System.exit(1);
         }
 
-        // Kill the writer thread
-        hWriter.interrupt();
+        // Tell writer thread to exit
+        chan.write(null);
     }
 
     public static String getMessage(Throwable e) {
